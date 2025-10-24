@@ -15,23 +15,33 @@ Install Pillow:
 pip install Pillow
 ```
 
+
 ## Usage
-Put an `img.jpg` file in the same directory or modify the script to open a different image.
 
-Basic usage (run from project root):
+### 1. Interactive CLI (recommended)
 
-- Interactive / one-liner examples:
+Run the terminal interface to select and apply filters interactively:
 
 ```powershell
-python -c "from Traitement_Images import img, grayscale; grayscale(img)"
-python -c "from Traitement_Images import img, sepia; sepia(img)"
+python main.py
 ```
 
-- Open and call functions in a Python REPL:
+You'll see a menu listing all available filters. Enter the number of the filter you want to apply. The result is saved as `output.jpg`.
+
+### 2. One-liner examples
+
+You can still call functions directly:
+
+```powershell
+python -c "from functions import img, grayscale; grayscale(img)"
+python -c "from functions import img, sepia; sepia(img)"
+```
+
+### 3. Python REPL
 
 ```powershell
 python
->>> from Traitement_Images import img, width, height, pixelate
+>>> from functions import img, width, height, pixelate
 >>> pixelate(img)  # will ask for block size, saves to output.jpg
 ```
 
@@ -46,7 +56,6 @@ python
 - Add unit tests that exercise the core pixel transforms on small generated images.
 
 ## Files
-- `Traitement_Images.py` — image processing functions (call functions after ensuring `img.jpg` exists)
+- `functions.py` — image processing functions (call functions after ensuring `img.jpg` exists)
+- `main.py` — terminal menu interface to select and apply filters interactively
 - `README.md` — this document
-
-If you want, I can add a small CLI (menu) and clamp values automatically — tell me which you'd prefer next.
