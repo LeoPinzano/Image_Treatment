@@ -1,194 +1,182 @@
-### Logiciel de traitement d'image ###
-# Import de la bibliotheque Pillow et TKinter
+### Image processing utility ###
+# Uses Pillow (PIL) to perform simple image processing operations.
 
 from PIL import Image
 
-### Fonctions ###
+### Functions ###
 
-#niveau de gris
-"""traitement classique de mise en niveau de gris d'une image
---->Cela signifie que les trois composantes ont la même valeur."""
-def gris(image):
-    for y in range(hauteur):
-        for x in range(largeur):
-            r, v, b = image.getpixel((x, y))
-            image.putpixel((x, y) , (r, r, r))
-    image.save("new_img.jpg")
+def grayscale(image):
+    """Convert an image to grayscale by setting R=G=B for every pixel.
+    Note: uses the global width/height variables defined in the main script.
+    """
+    for y in range(height):
+        for x in range(width):
+            r, g, b = image.getpixel((x, y))
+            image.putpixel((x, y), (r, r, r))
+    image.save("output.jpg")
 
-def negatif(img): #transforme l'image en son négatif en inversant l'intensité de chaques couleurs de l'image.
-    for y in range(hauteur): 
-        for x in range(largeur): 
-            r, v, b = img.getpixel((x, y)) 
-            img.putpixel((x, y), (255 - v, 255 - b, 255 - r)) 
-    img.save("new_img.jpg")
+def negative(img):
+    """Convert image to its negative by inverting each color channel."""
+    for y in range(height):
+        for x in range(width):
+            r, g, b = img.getpixel((x, y))
+            img.putpixel((x, y), (255 - r, 255 - g, 255 - b))
+    img.save("output.jpg")
 
-def filtre_rouge(img): # Fonction permettant d'appliquer un filtre rouge sur une image
-    for y in range(hauteur): 
-        for x in range(largeur): 
-            r, v, b = img.getpixel((x, y)) 
+def red_filter(img):
+    """Apply a red filter by zeroing green and blue channels."""
+    for y in range(height):
+        for x in range(width):
+            r, g, b = img.getpixel((x, y))
             img.putpixel((x, y), (r, 0, 0))
-    img.save("new-img.jpg")
+    img.save("output.jpg")
 
-#augmenter la luminosité
-""" courbe tonale pour augmenter la luminosité
----> composantes les plus foncés =plus aucun point entre 0 et 96. 
----> composantes ayant une valeur supérieure à 160 = points blancs"""
-def a_lum(img):
-    lum = int(input("De combien voulez vous augmenter la luminosité ? "))
-    for y in range(hauteur): 
-        for x in range(largeur): 
-            r, v, b = img.getpixel((x, y)) 
-            img.putpixel((x, y), (r + lum, v + lum, b + lum)) 
-    img.save("new_img.jpg")
+def increase_brightness(img):
+    """Increase brightness by adding a constant to each channel."""
+    amount = int(input("How much to increase brightness? "))
+    for y in range(height):
+        for x in range(width):
+            r, g, b = img.getpixel((x, y))
+            img.putpixel((x, y), (r + amount, g + amount, b + amount))
+    img.save("output.jpg")
 
-def r_lum(img): #réduit la luminosité de l'image en soustraillant une valeur fixe à toute les composantes
-    lum = int(input("De combien voulez vous diminuer la luminosité ? "))
-    for y in range(hauteur): 
-        for x in range(largeur): 
-            r, v, b = img.getpixel((x, y)) 
-            img.putpixel((x, y), (r - lum, v - lum, b - lum)) 
-    img.save("new_img.jpg")
+def decrease_brightness(img):
+    """Decrease brightness by subtracting a constant from each channel."""
+    amount = int(input("How much to decrease brightness? "))
+    for y in range(height):
+        for x in range(width):
+            r, g, b = img.getpixel((x, y))
+            img.putpixel((x, y), (r - amount, g - amount, b - amount))
+    img.save("output.jpg")
 
-def contraste(img):
-    """ permet de créer un contraste sur l'image """
-    for y in range(hauteur):
-        for x in range(largeur):
-            r, v, b = img.getpixel((x, y))
+def contrast(img):
+    """Apply a simple contrast effect using fixed thresholds."""
+    for y in range(height):
+        for x in range(width):
+            r, g, b = img.getpixel((x, y))
             if r < 80:
                 r = 0
             elif r > 140:
                 r = 255
-                    
-            if v < 80:
-                v = 0
-            elif v > 140:
-                v = 255
-                    
+
+            if g < 80:
+                g = 0
+            elif g > 140:
+                g = 255
+
             if b < 80:
                 b = 0
             elif b > 140:
                 b = 255
-            img.putpixel((x, y), (r, v, b))
-    img.save("new-img.jpg")
-    
-#seuillage
-"""traitement plus complexe pour le seuillage d'une image
---->pixel à une valeur > au seuil alors = 255 (blanc)
---->pixel à une valeur < au seuil alors = 0 (noir). """
-def seuillage(image):
-    seuil_r= 123
-    seuil_v= 123
-    seuil_b= 123
-    for y in range(hauteur):
-        for x in range(largeur):
-            r, v, b = image.getpixel((x, y))
-            if r > seuil_r:
-                r = 255
-            else:
-                r = 0
-            if v > seuil_v:
-                v = 255
-            else:
-                v = 0
-            if b > seuil_b:
-                b = 255
-            else:
-                b = 0
-                image.putpixel((x, y) , (r, v, b)) 
-    image.save("new_img.jpg")
 
-def pixel(img): #change les nombre de pixels dont sera fait l'image en divisant sa résolution par 10 (regroupe 10 pixels en 1).
-    pix = int(input("Quelle est la valeur de pixelisation ? "))
-    for y in range(0, hauteur, pix): 
-        for x in range(0, largeur, pix):
-            new_r = 0
-            new_v = 0
-            new_b = 0
-            for k in range(pix):
-                for l in range(pix):
-                    new_h = (y + k)
-                    new_l = (x + l)
-                    if new_h > hauteur:
-                        new_h = hauteur - pix-1
-                    if new_l > largeur:
-                        new_l = largeur - pix-1
-                    r, v, b = img.getpixel((new_l, new_h))
-                    new_r += r
-                    new_v += v
-                    new_b += b
-            for k in range(10):
-                for l in range(10):
-                    img.putpixel((x + k, y + l), (int(new_r//(pix*pix)), int(new_v//(pix*pix)), int(new_b//(pix*pix))))           
-    img.save("new_img.jpg")
+            img.putpixel((x, y), (r, g, b))
+    img.save("output.jpg")
+
+def thresholding(image):
+    """Simple thresholding: channels above threshold -> 255 else -> 0."""
+    thresh_r = 123
+    thresh_g = 123
+    thresh_b = 123
+    for y in range(height):
+        for x in range(width):
+            r, g, b = image.getpixel((x, y))
+            r = 255 if r > thresh_r else 0
+            g = 255 if g > thresh_g else 0
+            b = 255 if b > thresh_b else 0
+            image.putpixel((x, y), (r, g, b))
+    image.save("output.jpg")
+
+def pixelate(img):
+    """Pixelate the image by grouping pixels into blocks of user-specified size."""
+    block_size = int(input("Pixelation block size? "))
+    for y in range(0, height, block_size):
+        for x in range(0, width, block_size):
+            sum_r = sum_g = sum_b = 0
+            count = 0
+            for dy in range(block_size):
+                for dx in range(block_size):
+                    ny = y + dy
+                    nx = x + dx
+                    if ny >= height:
+                        ny = height - 1
+                    if nx >= width:
+                        nx = width - 1
+                    r, g, b = img.getpixel((nx, ny))
+                    sum_r += r
+                    sum_g += g
+                    sum_b += b
+                    count += 1
+            avg_r = int(sum_r // count)
+            avg_g = int(sum_g // count)
+            avg_b = int(sum_b // count)
+            for dy in range(block_size):
+                for dx in range(block_size):
+                    nx = x + dx
+                    ny = y + dy
+                    if nx >= width or ny >= height:
+                        continue
+                    img.putpixel((nx, ny), (avg_r, avg_g, avg_b))
+    img.save("output.jpg")
 
 def sepia(img):
-    """ permet la division de l'image """
-    for y in range(hauteur):
-        for x in range(largeur):
-            r, v, b = img.getpixel((x, y))
-            n_r = int(0.393 * r + 0.769 * v + 0.189 * b)
-            n_v = int(0.349 * r + 0.686 * v + 0.168 * b)
-            n_b = int(0.272 * r + 0.534 * v + 0.131 * b)
-            img.putpixel((x, y), (n_r, n_v, n_b))
-    img.save("new-img.jpg")
+    """Apply a sepia tone to the image."""
+    for y in range(height):
+        for x in range(width):
+            r, g, b = img.getpixel((x, y))
+            n_r = int(0.393 * r + 0.769 * g + 0.189 * b)
+            n_g = int(0.349 * r + 0.686 * g + 0.168 * b)
+            n_b = int(0.272 * r + 0.534 * g + 0.131 * b)
+            img.putpixel((x, y), (n_r, n_g, n_b))
+    img.save("output.jpg")
 
-#lissage
-"""traitement filtrage pour le lissage d'une image
---->Cela signifie rendre l'image plus fou = remplacerla valeur de chaque pixel par la moyenne
-des 9 pixels formant un carré."""
-def lissage(image):
-    matrice = [[1/9, 1/9, 1/9], [1/9, 1/9, 1/9], [1/9, 1/9, 1/9]]
-    for y in range(1, hauteur-1):
-        for x in range(1, largeur-1):
-            new_r = 0
-            new_b = 0
-            new_v = 0
-            for k in range(len(matrice)):
-                for l in range( len(matrice)):
-                    r, v, b = image.getpixel((x+k -1, y+l-1))
-                    new_r = new_r + int(r*matrice[k][l])
-                    new_b = new_b + int(b*matrice[k][l])
-                    new_v = new_v + int(v*matrice[k][l])
-                      
-                    image.putpixel((x, y) , (new_r, new_v, new_b))
-    image.save("new_img.jpg")
+def smoothing(image):
+    """Simple 3x3 average blur (smoothing)."""
+    kernel = [[1/9, 1/9, 1/9], [1/9, 1/9, 1/9], [1/9, 1/9, 1/9]]
+    for y in range(1, height - 1):
+        for x in range(1, width - 1):
+            new_r = new_g = new_b = 0
+            for ky in range(3):
+                for kx in range(3):
+                    r, g, b = image.getpixel((x + kx - 1, y + ky - 1))
+                    weight = kernel[ky][kx]
+                    new_r += int(r * weight)
+                    new_g += int(g * weight)
+                    new_b += int(b * weight)
+            image.putpixel((x, y), (new_r, new_g, new_b))
+    image.save("output.jpg")
 
-def accentuation(img): #Rend l'image plus nette en remplacant la vleur de chaque pixel par la moyenne des 9 pixels formant un carré.
-    matrice = [[0, -0.5, 0], [-0.5, 3, -0.5], [0, -0.5, 0]]
-    for x in range(0, largeur - 2):
-        for y in range(0, hauteur - 2):
-            new_r = 0
-            new_g = 0
-            new_b = 0
-            for i in range(len(matrice)):
-                for j in range(len(matrice)):
-                    r, g, b = img.getpixel((x - 1 + i, y - 1+ j))
-                    new_r += int(r * matrice[i][j])
-                    new_g += int(g * matrice[i][j])
-                    new_b += int(b * matrice[i][j])
+def sharpen(img):
+    """Sharpen image using a simple 3x3 kernel."""
+    kernel = [[0, -0.5, 0], [-0.5, 3, -0.5], [0, -0.5, 0]]
+    for x in range(1, width - 1):
+        for y in range(1, height - 1):
+            new_r = new_g = new_b = 0
+            for ky in range(3):
+                for kx in range(3):
+                    r, g, b = img.getpixel((x - 1 + kx, y - 1 + ky))
+                    weight = kernel[ky][kx]
+                    new_r += int(r * weight)
+                    new_g += int(g * weight)
+                    new_b += int(b * weight)
             img.putpixel((x, y), (new_r, new_g, new_b))
-    img.save("new_img.jpg")
+    img.save("output.jpg")
 
-def gradiant(img):
-    """ permet de réaliser le filtrage gradient grâce a une matrice """
-    matrice = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
-    """permet de créer la matrice gradient"""   
-    for y in range(0, hauteur-2):
-        for x in range(0, largeur-2):
-            n_r = 0
-            n_v = 0
-            n_b = 0
-            for j in range (3):
-                for i in range (3):
-                    r, v, b = img.getpixel((x+i, y+j))
-                    n_r = n_r + r*matrice[i][j]
-                    n_v = n_v + v*matrice[i][j]
-                    n_b = n_b + b*matrice[i][j]
-                    img.putpixel((x, y), (n_r, n_v, n_b))
-    
-    img.save("new-img.jpg")
+def gradient(img):
+    """Apply a gradient (Sobel-like) filter using a 3x3 kernel."""
+    kernel = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
+    for y in range(0, height - 2):
+        for x in range(0, width - 2):
+            n_r = n_g = n_b = 0
+            for j in range(3):
+                for i in range(3):
+                    r, g, b = img.getpixel((x + i, y + j))
+                    n_r += r * kernel[j][i]
+                    n_g += g * kernel[j][i]
+                    n_b += b * kernel[j][i]
+            img.putpixel((x, y), (n_r, n_g, n_b))
+    img.save("output.jpg")
 
-### Corps du programme ###
+### Main program ###
 
 img = Image.open("img.jpg")
-largeur, hauteur = img.size
+width, height = img.size
