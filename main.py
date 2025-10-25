@@ -1,60 +1,73 @@
-"""
-main.py - Terminal interface for image filters
+"""main.py - Runner and entrypoint for image filters.
 
-Usage:
-- Ensure 'img.jpg' exists in the same folder.
-- Run: python main.py
-- Choose a filter from the menu; result is saved as 'output.jpg'.
+This file is a lightweight entrypoint. It supports two modes:
+- Launch the interactive CLI menu: python main.py --cli
+- Apply a specific filter by number or name: python main.py <number|name>
+
+If no arguments are provided the script prints usage instructions.
 """
 
 import sys
-from functions import (
-    img, width, height,
-    grayscale, negative, red_filter, increase_brightness, decrease_brightness,
-    contrast, thresholding, pixelate, sepia, smoothing, sharpen, gradient
-)
+from functions import img, width, height
+import interface
 
-FILTERS = [
-    ("Grayscale", grayscale),
-    ("Negative", negative),
-    ("Red filter", red_filter),
-    ("Increase brightness", increase_brightness),
-    ("Decrease brightness", decrease_brightness),
-    ("Contrast", contrast),
-    ("Thresholding", thresholding),
-    ("Pixelate", pixelate),
-    ("Sepia", sepia),
-    ("Smoothing (blur)", smoothing),
-    ("Sharpen", sharpen),
-    ("Gradient (edge)", gradient),
-]
+
+def print_usage():
+    print("Usage:")
+    print("  python main.py --cli            # launch interactive menu")
+    print("  python main.py <number>         # apply filter by number (see --list)")
+    print("  python main.py --list           # list available filters")
+    print("")
+    print("Example: python main.py --cli")
+
+
+def list_filters():
+    for i, (name, _) in enumerate(interface.FILTERS, 1):
+        print(f"{i}. {name}")
+
+
+def apply_by_number(n: int):
+    if not (1 <= n <= len(interface.FILTERS)):
+        print("Filter number out of range")
+        return
+    name, func = interface.FILTERS[n - 1]
+    print(f"Applying: {name} ...")
+    func(img)
+    print("Done. Saved as output.jpg")
+
+
+def apply_by_name(name: str):
+    for fname, func in interface.FILTERS:
+        if fname.lower() == name.lower():
+            print(f"Applying: {fname} ...")
+            func(img)
+            print("Done. Saved as output.jpg")
+            return
+    print(f"No filter named '{name}' found")
+
 
 def main():
-    print("Image Filter CLI\n==================")
-    print("Image loaded: img.jpg ({}x{})".format(width, height))
-    while True:
-        print("\nChoose a filter to apply:")
-        for i, (name, _) in enumerate(FILTERS, 1):
-            print(f"  {i}. {name}")
-        print("  0. Exit")
+    if len(sys.argv) == 1:
+        print("Image Filter Runner")
+        print("Image loaded: img.jpg ({}x{})".format(width, height))
+        print_usage()
+        return
+
+    arg = sys.argv[1]
+    if arg in ("-h", "--help"):
+        print_usage()
+    elif arg == "--cli":
+        interface.main()
+    elif arg == "--list":
+        list_filters()
+    else:
+        # try number first
         try:
-            choice = int(input("Enter number: "))
+            n = int(arg)
+            apply_by_number(n)
         except ValueError:
-            print("Invalid input. Please enter a number.")
-            continue
-        if choice == 0:
-            print("Exiting.")
-            break
-        if 1 <= choice <= len(FILTERS):
-            filter_name, filter_func = FILTERS[choice - 1]
-            print(f"Applying: {filter_name} ...")
-            try:
-                filter_func(img)
-                print("Done! Saved as output.jpg.")
-            except Exception as e:
-                print(f"Error applying filter: {e}")
-        else:
-            print("Invalid choice. Try again.")
+            apply_by_name(arg)
+
 
 if __name__ == "__main__":
     main()
