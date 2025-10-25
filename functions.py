@@ -193,8 +193,3 @@ def gradient(img):
                     n_g += g * kernel[j][i]
                     n_b += b * kernel[j][i]
             img.putpixel((x, y), _clamp_color((n_r, n_g, n_b)))
-
-### Main program ###
-
-img = Image.open("img.jpg")
-width, height = img.size

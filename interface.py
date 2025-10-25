@@ -10,6 +10,31 @@ import argparse
 from PIL import Image
 import functions as F
 
+# Optional color support: prefer colorama when available (works on Windows).
+try:
+    import colorama
+    from colorama import Fore, Style
+
+    colorama.init()
+    RESET = Style.RESET_ALL
+    BOLD = Style.BRIGHT
+    RED = Fore.RED
+    GREEN = Fore.GREEN
+    YELLOW = Fore.YELLOW
+    BLUE = Fore.BLUE
+    MAGENTA = Fore.MAGENTA
+    CYAN = Fore.CYAN
+except Exception:
+    # No coloring available — fall back to no-op strings
+    RESET = BOLD = RED = GREEN = YELLOW = BLUE = MAGENTA = CYAN = ""
+
+
+def _col(text: str, color: str = "") -> str:
+    """Wrap text in color codes if available."""
+    if not color:
+        return text
+    return f"{color}{text}{RESET}"
+
 FILTERS = [
     ("Grayscale", F.grayscale),
     ("Negative", F.negative),
@@ -28,7 +53,9 @@ FILTERS = [
 
 def list_filters():
     for i, (name, _) in enumerate(FILTERS, 1):
-        print(f"{i}. {name}")
+        num = _col(f"{i}.", CYAN)
+        nm = _col(name, BOLD)
+        print(f"{num} {nm}")
 
 
 def _load_image(path: str):
@@ -36,26 +63,26 @@ def _load_image(path: str):
         img = Image.open(path)
         F.img = img
         F.width, F.height = img.size
-        print(f"Loaded image: {path} ({F.width}x{F.height})")
+        print(_col("Loaded image:", GREEN), _col(f"{path}", BOLD), _col(f"({F.width}x{F.height})", CYAN))
         return True
     except Exception as e:
-        print(f"Failed to open '{path}': {e}")
+        print(_col("Failed to open:", RED), _col(path, BOLD), "->", _col(str(e), RED))
         return False
 
 
 def show_welcome():
     """Print a short welcome banner describing the program features."""
-    print("\n=== Image Treatment - Welcome ===\n")
-    print("This small utility applies simple pixel-based filters to an image using Pillow.")
-    print("Features:")
-    print("  - Load an input image: use -i/--input on the command line or '-i <path>' in the prompt")
-    print("  - Apply one or more filters by number or name (comma-separated)")
-    print("  - List available filters with --list or the prompt command --list")
-    print("  - Save results with -o/--output (or set -o at the prompt)")
-    print("\nNotes:")
-    print("  - Filters operate in place on the loaded image; the final output is saved once.")
-    print("  - Large images may be slow; consider resizing before heavy operations.")
-    print("\nQuick example:\n  python main.py -i input.jpg -f \"1,sepia\" -o result.jpg\n")
+    print("\n" + _col("=== Image Treatment - Welcome ===", BOLD + CYAN) + "\n")
+    print(_col("This small utility applies simple pixel-based filters to an image using Pillow.", ""))
+    print(_col("Features:", YELLOW))
+    print("  -", _col("Load an input image", BLUE) + ": use -i/--input on the command line or '-i <path>' in the prompt")
+    print("  -", _col("Apply one or more filters", BLUE) + ": by number or name (comma-separated)")
+    print("  -", _col("List available filters", BLUE) + ": --list or the prompt command --list")
+    print("  -", _col("Save results", BLUE) + ": -o/--output (or set -o at the prompt)")
+    print("\n" + _col("Notes:", YELLOW))
+    print("  -", _col("Filters operate in place", MAGENTA) + ": final output is saved once.")
+    print("  -", _col("Large images may be slow", MAGENTA) + ": consider resizing before heavy operations.")
+    print("\n" + _col("Quick example:", GREEN) + "\n  python main.py -i input.jpg -f \"1,sepia\" -o result.jpg\n")
 
 
 def apply_sequence(tokens, output_filename="output.jpg", input_filename: str = None):
@@ -67,7 +94,7 @@ def apply_sequence(tokens, output_filename="output.jpg", input_filename: str = N
             return
 
     if not hasattr(F, 'img') or F.img is None:
-        print("No image loaded. Use -i/--input to provide an image first.")
+        print(_col("No image loaded.", YELLOW), "Use", _col("-i/--input", BOLD), "to provide an image first.")
         return
 
     applied = False
@@ -83,29 +110,29 @@ def apply_sequence(tokens, output_filename="output.jpg", input_filename: str = N
 
         if n is not None:
             if not (1 <= n <= len(FILTERS)):
-                print(f"Filter number out of range: {n}")
+                print(_col("Filter number out of range:", RED), _col(str(n), BOLD))
                 continue
             name, func = FILTERS[n - 1]
         else:
             matches = [pair for pair in FILTERS if pair[0].lower() == token.lower()]
             if not matches:
-                print(f"No filter named '{token}' found")
+                print(_col("No filter named", RED), _col(f"'{token}'", BOLD))
                 continue
             name, func = matches[0]
 
-        print(f"Applying: {name} ...")
+        print(_col("Applying:", YELLOW), _col(name, BOLD), _col("...", YELLOW))
         try:
             func(F.img)
             applied = True
         except Exception as e:
-            print(f"Error applying filter '{name}': {e}")
+            print(_col("Error applying filter", RED), _col(name, BOLD), _col("->", RED), _col(str(e), RED))
 
     if applied:
         try:
             F.img.save(output_filename)
-            print(f"Saved final image as {output_filename}")
+            print(_col("Saved final image as", GREEN), _col(output_filename, BOLD))
         except Exception as e:
-            print(f"Failed to save result: {e}")
+            print(_col("Failed to save result:", RED), _col(str(e), RED))
 
 
 def main(output_filename: str = "output.jpg", input_filename: str = None):
