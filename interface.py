@@ -50,12 +50,52 @@ FILTERS = [
     ("Gradient (edge)", F.gradient),
 ]
 
+# Session history (recent applied filters) for the running session
+session_history = []
+
 
 def list_filters():
     for i, (name, _) in enumerate(FILTERS, 1):
         num = _col(f"{i}.", CYAN)
         nm = _col(name, BOLD)
         print(f"{num} {nm}")
+
+
+def show_menu(output_filename: str = None):
+    """Show an improved, full menu with image status, recent actions and commands."""
+    print(_col("\n=== Full Menu ===", BOLD + BLUE))
+    # Image status
+    if hasattr(F, 'img') and F.img is not None:
+        try:
+            w, h = F.img.size
+            print(_col("Image:", GREEN), _col(f"loaded ({w}x{h})", BOLD), _col("- use -i <path> to change", CYAN))
+        except Exception:
+            print(_col("Image:", YELLOW), _col("(unknown state)", BOLD))
+    else:
+        print(_col("Image:", YELLOW), _col("(none loaded)", BOLD), _col("- load with -i <path>", CYAN))
+
+    # Output filename
+    if output_filename:
+        print(_col("Output:", GREEN), _col(output_filename, BOLD))
+
+    # Recent actions
+    if session_history:
+        recent = ", ".join(session_history[-8:])
+        print(_col("Recent:", MAGENTA), _col(recent, BOLD))
+
+    # Filters
+    print(_col("\nAvailable filters:", YELLOW))
+    for i, (name, _) in enumerate(FILTERS, 1):
+        print(f"  {_col(str(i), CYAN)}. {_col(name, BOLD)}")
+
+    # Commands
+    print(_col("\nCommands:", YELLOW))
+    print("  ", _col("-i <path>", BOLD), "Load input image")
+    print("  ", _col("-o <file>", BOLD), "Set output filename")
+    print("  ", _col("--list | menu", BOLD), "Show this full menu")
+    print("  ", _col("<n,n,...> or <name,name,...>", BOLD), "Apply filters by number or name")
+    print("  ", _col("0 | exit | quit", BOLD), "Exit")
+    print()
 
 
 def _load_image(path: str):
@@ -124,6 +164,8 @@ def apply_sequence(tokens, output_filename="output.jpg", input_filename: str = N
         try:
             func(F.img)
             applied = True
+            # record in session history
+            session_history.append(name)
         except Exception as e:
             print(_col("Error applying filter", RED), _col(name, BOLD), _col("->", RED), _col(str(e), RED))
 
@@ -148,21 +190,14 @@ def main(output_filename: str = "output.jpg", input_filename: str = None):
             return
 
     if not hasattr(F, 'img') or F.img is None:
-        print("No image loaded. Use -i <path> or run with -i/--input <path> to load an image.")
-        # still allow user to set image from prompt
+        # No image loaded yet; allow user to set image from prompt
+        pass
 
-    print("Image Filter CLI\n==================")
+    # Show a compact hint instead of the full menu on startup
+    print(_col("Tip:", YELLOW), "Type", _col("--list", BOLD), "to view available filters,", _col("-i <path>", BOLD), "to load an image, or", _col("0", BOLD), "to exit.")
+
     while True:
-        try:
-            iw, ih = F.img.size
-            print(f"Image loaded: ({iw}x{ih})")
-        except Exception:
-            print("Image loaded: (none)")
-        print("\nChoose a filter to apply (you can enter multiple, separated by commas):")
-        for i, (name, _) in enumerate(FILTERS, 1):
-            print(f"  {i}. {name}")
-        print("  0. Exit")
-        raw = input("Enter number(s) or name(s), or 0 to exit (or --help for commands): ")
+        raw = input("Enter command or filter(s) (or --help for commands): ")
         if not raw:
             print("No input provided. Try again.")
             continue
@@ -173,7 +208,7 @@ def main(output_filename: str = "output.jpg", input_filename: str = None):
             parts = stripped.split()
             cmd = parts[0]
             if cmd in ('--list', '-l'):
-                list_filters()
+                show_menu(output_filename)
                 continue
             if cmd in ('--help', '-h'):
                 print("Commands:")
@@ -196,6 +231,9 @@ def main(output_filename: str = "output.jpg", input_filename: str = None):
                     _load_image(fn)
                 else:
                     print("Usage: -i <filename>")
+                continue
+            if cmd in ('menu', '--menu'):
+                show_menu(output_filename)
                 continue
             if cmd in ('exit', 'quit', '0'):
                 print('Exiting.')
@@ -226,12 +264,13 @@ def main(output_filename: str = "output.jpg", input_filename: str = None):
                     continue
                 name, func = matches[0]
 
-            print(f"Applying: {name} ...")
+            print(_col("Applying:", YELLOW), _col(name, BOLD), _col("...", YELLOW))
             try:
                 func(F.img)
                 applied_any = True
+                session_history.append(name)
             except Exception as e:
-                print(f"Error applying filter '{name}': {e}")
+                print(_col("Error applying filter", RED), _col(name, BOLD), _col("->", RED), _col(str(e), RED))
 
         if applied_any:
             try:
@@ -242,7 +281,10 @@ def main(output_filename: str = "output.jpg", input_filename: str = None):
 
 
 def cli(argv=None):
-    parser = argparse.ArgumentParser(prog="interface.py", description="Interactive image filter interface")
+    # Disable argparse automatic -h/--help so we can use help to launch the interactive menu
+    parser = argparse.ArgumentParser(prog="interface.py", description="Interactive image filter interface", add_help=False)
+    # Custom help flag: when passed, open the interactive menu instead of printing the CLI help
+    parser.add_argument("-h", "--help", action="store_true", help="show interactive menu (same as --cli)")
     parser.add_argument("--cli", action="store_true", help="launch interactive menu")
     parser.add_argument("--list", action="store_true", help="list available filters")
     parser.add_argument("-f", "--filters", help="comma-separated list of filters (numbers or names)")
@@ -251,8 +293,13 @@ def cli(argv=None):
 
     args = parser.parse_args(argv)
 
+    # If the user asked for help (-h/--help) we treat that as a request to open the interactive menu
+    if args.help:
+        main(output_filename=args.output, input_filename=args.input)
+        return
+
     if args.list:
-        list_filters()
+        show_menu(args.output)
         return
 
     if args.filters:
