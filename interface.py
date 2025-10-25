@@ -61,9 +61,13 @@ def list_filters():
         print(f"{num} {nm}")
 
 
-def show_menu(output_filename: str = None):
-    """Show an improved, full menu with image status, recent actions and commands."""
-    print(_col("\n=== Full Menu ===", BOLD + BLUE))
+def show_menu(output_filename: str = None, show_commands: bool = True):
+    """Show an improved, full menu with image status, recent actions and commands.
+
+    If show_commands is False, the Commands block will be omitted. This is used
+    for the `--list` action which should only show filters/status.
+    """
+    print(_col("\n=== Filters ===", BOLD + BLUE))
     # Image status
     if hasattr(F, 'img') and F.img is not None:
         try:
@@ -88,14 +92,15 @@ def show_menu(output_filename: str = None):
     for i, (name, _) in enumerate(FILTERS, 1):
         print(f"  {_col(str(i), CYAN)}. {_col(name, BOLD)}")
 
-    # Commands
-    print(_col("\nCommands:", YELLOW))
-    print("  ", _col("-i <path>", BOLD), "Load input image")
-    print("  ", _col("-o <file>", BOLD), "Set output filename")
-    print("  ", _col("--list | menu", BOLD), "Show this full menu")
-    print("  ", _col("<n,n,...> or <name,name,...>", BOLD), "Apply filters by number or name")
-    print("  ", _col("0 | exit | quit", BOLD), "Exit")
-    print()
+    # Commands (optional)
+    if show_commands:
+        print(_col("\nCommands:", YELLOW))
+        print("  ", _col("-i <path>", BOLD), "Load input image")
+        print("  ", _col("-o <file>", BOLD), "Set output filename")
+        print("  ", _col("--list | menu", BOLD), "Show this full menu")
+        print("  ", _col("<n,n,...> or <name,name,...>", BOLD), "Apply filters by number or name")
+        print("  ", _col("0 | exit | quit", BOLD), "Exit")
+        print()
 
 
 def _load_image(path: str):
@@ -208,7 +213,8 @@ def main(output_filename: str = "output.jpg", input_filename: str = None):
             parts = stripped.split()
             cmd = parts[0]
             if cmd in ('--list', '-l'):
-                show_menu(output_filename)
+                # show a compact listing (no Commands block) when user requests --list
+                show_menu(output_filename, show_commands=False)
                 continue
             if cmd in ('--help', '-h'):
                 print("Commands:")
@@ -299,7 +305,8 @@ def cli(argv=None):
         return
 
     if args.list:
-        show_menu(args.output)
+        # For CLI --list, show only the status and filters (hide the Commands block)
+        show_menu(args.output, show_commands=False)
         return
 
     if args.filters:

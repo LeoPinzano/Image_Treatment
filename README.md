@@ -1,9 +1,11 @@
 # Image_Treatment
 
-Small image processing utilities using Pillow (PIL).
+Small image-processing utilities using Pillow (PIL). This project provides a small set of educational, pixel-based filters implemented in [functions.py](functions.py) and two ways to run them: an interactive terminal menu in [interface.py](interface.py) and a lightweight CLI in [main.py](main.py).
 
-## Overview
-This repository contains `Traitement_Images.py`, a collection of simple image processing functions (grayscale, negative, red filter, brightness, contrast, thresholding, pixelation, sepia, smoothing, sharpening, gradient). The file was translated from French to English; functions operate directly on a PIL Image object and save results to `output.jpg` by default.
+## Contents
+- [functions.py](functions.py) — image processing functions (e.g. [`functions.grayscale`](functions.py), [`functions.sepia`](functions.py), [`functions.pixelate`](functions.py))
+- [interface.py](interface.py) — interactive menu and helpers (e.g. [`interface.main`](interface.py), [`interface.apply_sequence`](interface.py))
+- [main.py](main.py) — small runner / CLI entry (`python main.py ...`)
 
 ## Requirements
 - Python 3.7+
