@@ -7,18 +7,10 @@ This file is a lightweight entrypoint. It supports two modes:
 If no arguments are provided the script prints usage instructions.
 """
 
+import argparse
 import sys
 from functions import img, width, height
 import interface
-
-
-def print_usage():
-    print("Usage:")
-    print("  python main.py --cli            # launch interactive menu")
-    print("  python main.py <number>         # apply filter by number (see --list)")
-    print("  python main.py --list           # list available filters")
-    print("")
-    print("Example: python main.py --cli")
 
 
 def list_filters():
@@ -26,47 +18,78 @@ def list_filters():
         print(f"{i}. {name}")
 
 
-def apply_by_number(n: int):
-    if not (1 <= n <= len(interface.FILTERS)):
-        print("Filter number out of range")
-        return
-    name, func = interface.FILTERS[n - 1]
-    print(f"Applying: {name} ...")
-    func(img)
-    print("Done. Saved as output.jpg")
-
-
-def apply_by_name(name: str):
-    for fname, func in interface.FILTERS:
-        if fname.lower() == name.lower():
-            print(f"Applying: {fname} ...")
-            func(img)
-            print("Done. Saved as output.jpg")
-            return
-    print(f"No filter named '{name}' found")
-
-
-def main():
-    if len(sys.argv) == 1:
-        print("Image Filter Runner")
-        print("Image loaded: img.jpg ({}x{})".format(width, height))
-        print_usage()
-        return
-
-    arg = sys.argv[1]
-    if arg in ("-h", "--help"):
-        print_usage()
-    elif arg == "--cli":
-        interface.main()
-    elif arg == "--list":
-        list_filters()
-    else:
-        # try number first
+def apply_sequence(tokens, output_filename):
+    """Apply a sequence of tokens (numbers or names) to the module-level `img`.
+    Tokens is an iterable of strings. Saves final image to output_filename.
+    """
+    applied = False
+    for token in tokens:
+        token = token.strip()
+        if not token:
+            continue
+        # try numeric
         try:
-            n = int(arg)
-            apply_by_number(n)
-        except ValueError:
-            apply_by_name(arg)
+            n = int(token)
+        except Exception:
+            n = None
+
+        if n is not None:
+            if not (1 <= n <= len(interface.FILTERS)):
+                print(f"Filter number out of range: {n}")
+                continue
+            name, func = interface.FILTERS[n - 1]
+        else:
+            matches = [pair for pair in interface.FILTERS if pair[0].lower() == token.lower()]
+            if not matches:
+                print(f"No filter named '{token}' found")
+                continue
+            name, func = matches[0]
+
+        print(f"Applying: {name} ...")
+        try:
+            func(img)
+            applied = True
+        except Exception as e:
+            print(f"Error applying filter '{name}': {e}")
+
+    if applied:
+        try:
+            img.save(output_filename)
+            print(f"Saved final image as {output_filename}")
+        except Exception as e:
+            print(f"Failed to save result: {e}")
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(prog="main.py", description="Image filters runner")
+    parser.add_argument("--cli", action="store_true", help="launch interactive menu")
+    parser.add_argument("--list", action="store_true", help="list available filters")
+    parser.add_argument("-f", "--filters", help="comma-separated list of filters (numbers or names)")
+    parser.add_argument("-o", "--output", default="output.jpg", help="output filename (default: output.jpg)")
+
+    args = parser.parse_args(argv)
+
+    # If --list was provided, list and exit
+    if args.list:
+        list_filters()
+        return
+
+    # If filters were passed non-interactively, apply them and exit
+    if args.filters:
+        tokens = [t.strip() for t in args.filters.split(",") if t.strip()]
+        if not tokens:
+            print("No filters provided to --filters")
+            return
+        apply_sequence(tokens, args.output)
+        return
+
+    # If --cli was provided, launch interactive menu
+    if args.cli:
+        interface.main(output_filename=args.output)
+        return
+
+    # Default behavior: no explicit options -> launch interactive menu
+    interface.main(output_filename=args.output)
 
 
 if __name__ == "__main__":
